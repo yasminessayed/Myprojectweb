@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="../assets/style.css">
+
+<div class="container">
+    <h2>Create Account</h2>
+
+    <form method="post">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button name="register">Register</button>
+    </form>
+
+    <div class="link">
+        <a href="login.php">Already have account? Login</a>
+    </div>
+</div>
+
+<?php
+require_once __DIR__ . "/../config/db.php";  // المسار حسب مكان الملف
+#اتأكّد إن الفورم اتبعت    
+if (isset($_POST['register'])) {
+    #استقبال البيانات من الفورم 
+    #inout name خد القيمة اللي المستخدم كتبها في 
+    #  php وخزّنها في متغيرات
+    $name  = $_POST['name'];
+    $email = $_POST['email'];
+    $pass  = password_hash($_POST['password'], PASSWORD_DEFAULT);  #تشفير الباسورد/ يحوّل الباسورد لحاجة مش مفهومة 
+    
+    #prepare(): باستخدام placeholders / من غير قيم حقيقية/sql نجهّز استعلام
+    $stmt = $conn->prepare(
+        "INSERT INTO users (name,email,password)
+         VALUES (:name,:email,:password)"  #    ده مكان فاضي هنملاه بعدين(:name) يعني إيه  
+    );
+
+    #execute():  تنفيذ فعلي   / sql تنفيذ s/ db الداتا تتخزن في B/ كل البليس هولدر بياخد قيمته
+    $stmt->execute([
+        ":name" => $name,
+        ":email" => $email,
+        ":password" => $pass
+    ]);
+
+    echo "Account Created Successfully ✅";
+
+}
+?>
+
+<!--
+<form method="post">
+    Name <input type="text" name="name" required><br><br>
+    Email <input type="email" name="email" required><br><br>
+    Password <input type="password" name="password" required><br><br>
+    <button name="register">Register</button>
+</form>
+-->
