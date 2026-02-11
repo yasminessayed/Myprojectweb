@@ -1,54 +1,77 @@
-<link rel="stylesheet" href="../assets/style.css">
+<?php
+session_start();
 
-<div class="container">
-    <h2>Create Account</h2>
+require_once "../config/db.php";
+require_once "../functions/auth.php";
+require_once "../functions/helpers.php";
 
-    <form method="post">
-        <input type="text" name="name" placeholder="Name" required>
+$error = ""; // لتخزين أي رسالة خطأ
+
+if (isset($_POST['register'])) {
+
+    // تنظيف البيانات
+    $name = clean($_POST['name']);
+    $email = clean($_POST['email']);
+    $password = clean($_POST['password']);
+    $confirm = clean($_POST['confirm_password']);
+
+    // 1️⃣ تحقق من الحقول الفارغة
+    if (empty($name) || empty($email) || empty($password) || empty($confirm)) {
+        $error = "Please fill all fields";
+    }
+    // 2️⃣ تحقق من تطابق الباسورد
+    elseif ($password !== $confirm) {
+        $error = "Passwords do not match";
+    }
+    // 3️⃣ تحقق إن الإيميل مش موجود أصلاً
+    elseif (getUserByEmail($conn, $email)) {
+        $error = "Email already registered";
+    } else {
+        // 4️⃣ تسجيل المستخدم
+        $registerData = [
+            'name' => $name,
+            'email' => $email,
+            'password' => $password
+        ];
+
+        if (registerUser($conn, $registerData)) {
+            // تسجيل ناجح → عمل Login تلقائي
+            loginUser($conn, $email, $password);
+
+            // Redirect للصفحة الرئيسية أو products
+            redirect("../products/index.php");
+        } else {
+            $error = "Registration failed, please try again";
+        }
+    }
+}
+
+?>
+<!-- HTML الفورم -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+    <h2>Register</h2>
+
+    <?php if (!empty($error)): ?>
+        <p style="color:red;"><?php echo $error; ?></p>
+    <?php endif; ?>
+
+    <form action="" method="POST">
+        <input type="text" name="name" placeholder="Full Name" required>
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
-        <button name="register">Register</button>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+        <button type="submit" name="register">Register</button>
     </form>
+    <p>Already have an account? <a href="login.php">Login here</a></p>
+</body>
 
-    <div class="link">
-        <a href="login.php">Already have account? Login</a>
-    </div>
-</div>
-
-<?php
-require_once __DIR__ . "/../config/db.php";  // المسار حسب مكان الملف
-#اتأكّد إن الفورم اتبعت    
-if (isset($_POST['register'])) {
-    #استقبال البيانات من الفورم 
-    #inout name خد القيمة اللي المستخدم كتبها في 
-    #  php وخزّنها في متغيرات
-    $name  = $_POST['name'];
-    $email = $_POST['email'];
-    $pass  = password_hash($_POST['password'], PASSWORD_DEFAULT);  #تشفير الباسورد/ يحوّل الباسورد لحاجة مش مفهومة 
-    
-    #prepare(): باستخدام placeholders / من غير قيم حقيقية/sql نجهّز استعلام
-    $stmt = $conn->prepare(
-        "INSERT INTO users (name,email,password)
-         VALUES (:name,:email,:password)"  #    ده مكان فاضي هنملاه بعدين(:name) يعني إيه  
-    );
-
-    #execute():  تنفيذ فعلي   / sql تنفيذ s/ db الداتا تتخزن في B/ كل البليس هولدر بياخد قيمته
-    $stmt->execute([
-        ":name" => $name,
-        ":email" => $email,
-        ":password" => $pass
-    ]);
-
-    echo "Account Created Successfully ✅";
-
-}
-?>
-
-<!--
-<form method="post">
-    Name <input type="text" name="name" required><br><br>
-    Email <input type="email" name="email" required><br><br>
-    Password <input type="password" name="password" required><br><br>
-    <button name="register">Register</button>
-</form>
--->
+</html>

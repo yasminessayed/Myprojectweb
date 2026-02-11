@@ -6,6 +6,7 @@
 
 
 <?php
+/*
 # Session بيبدأ أو يكمل 
 session_start();
 # Databaseالاتصال بالـ 
@@ -44,5 +45,22 @@ if (isset($_POST['login'])) {
         }
     }
 }
+*/
+session_start();
 
+require_once "../config/db.php";
+require_once "../functions/auth.php";
+require_once "../functions/helpers.php";
+
+if (isset($_POST['login'])) {
+
+    $email = clean($_POST['email']);
+    $password = clean($_POST['password']);
+
+    if (loginUser($conn, $email, $password)) {
+        redirect("../products/index.php");
+    } else {
+        $error = "Invalid email or password";
+    }
+}
 ?>
