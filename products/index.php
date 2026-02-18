@@ -1,17 +1,18 @@
 <?php
 session_start();
 
-// 1️⃣ ملفات المشروع
 require_once "../config/db.php";
-require_once "../functions/helpers.php";
-require_once "../functions/product.php";
 
-// 2️⃣ حماية الصفحة
-checkAuth();
 
-// 3️⃣ جلب المنتجات من DB
-$products = getAllProducts($conn);
+$database = new Database("root", "");
+$db = $database->getConnection();
+
+// هنا بننادي على الميثود
+$products = $database->getAll();
+
+
 ?>
+
 
 
 <!DOCTYPE html>

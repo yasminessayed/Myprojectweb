@@ -1,52 +1,43 @@
 <?php
 session_start();
 
-require_once "../config/db.php";
-require_once "../functions/auth.php";
-require_once "../functions/helpers.php";
+require_once "../config/db.php";     #بنستدعي Database class
+require_once "../classes/user.php";  #بنستدعي User model
 
-$error = ""; // لتخزين أي رسالة خطأ
+$error = "";
 
-if (isset($_POST['register'])) {
+$database = new Database("root", "");
+$db = $database->getConnection();   // لو ضفتي method getConnection() زي ما شرحنا
 
-    // تنظيف البيانات
-    $name = clean($_POST['name']);
-    $email = clean($_POST['email']);
-    $password = clean($_POST['password']);
-    $confirm = clean($_POST['confirm_password']);
 
-    // 1️⃣ تحقق من الحقول الفارغة
-    if (empty($name) || empty($email) || empty($password) || empty($confirm)) {
-        $error = "Please fill all fields";
-    }
-    // 2️⃣ تحقق من تطابق الباسورد
-    elseif ($password !== $confirm) {
+$user = new User($db);
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {      #التحقق من نوع الطلب يعني لو الفورم اتبعت فعلاً 
+
+    if ($user->getByEmail($_POST['email'])) {                     // تحقق من وجود الإيميل
+
+        $error = "Email already exists";
+
+    } elseif ($_POST['password'] !== $_POST['confirm_password']) {       #نتحقق لو الباسورد متطابقين 
+
         $error = "Passwords do not match";
-    }
-    // 3️⃣ تحقق إن الإيميل مش موجود أصلاً
-    elseif (getUserByEmail($conn, $email)) {
-        $error = "Email already registered";
+
     } else {
-        // 4️⃣ تسجيل المستخدم
-        $registerData = [
-            'name' => $name,
-            'email' => $email,
-            'password' => $password
-        ];
 
-        if (registerUser($conn, $registerData)) {
-            // تسجيل ناجح → عمل Login تلقائي
-            loginUser($conn, $email, $password);
+        $user->create(                         #إنشاء مستخدم 
+            $_POST['name'],
+            $_POST['email'],
+            $_POST['password']
+        );
 
-            // Redirect للصفحة الرئيسية أو products
-            redirect("../products/index.php");
-        } else {
-            $error = "Registration failed, please try again";
-        }
+        header("Location: login.php");
+        exit();
     }
 }
 
 ?>
+
 <!-- HTML الفورم -->
 <!DOCTYPE html>
 <html lang="en">
@@ -60,7 +51,7 @@ if (isset($_POST['register'])) {
 <body>
     <h2>Register</h2>
 
-    <?php if (!empty($error)): ?>
+    <?php if (!empty($error)): ?> <!--عرض رسالة خطأ-->
         <p style="color:red;"><?php echo $error; ?></p>
     <?php endif; ?>
 

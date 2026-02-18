@@ -46,21 +46,29 @@ if (isset($_POST['login'])) {
     }
 }
 */
+
 session_start();
 
 require_once "../config/db.php";
-require_once "../functions/auth.php";
-require_once "../functions/helpers.php";
+require_once "../classes/user.php";
+require_once "../classes/Auth.php";
 
-if (isset($_POST['login'])) {
+$database = new Database("root", "");
+$db = $database->getConnection();
 
-    $email = clean($_POST['email']);
-    $password = clean($_POST['password']);
 
-    if (loginUser($conn, $email, $password)) {
-        redirect("../products/index.php");
+$user = new User($db);
+$auth = new Auth($user);
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    if ($auth->login($_POST['email'], $_POST['password'])) {
+        header("Location: ../products/index.php");
+        
     } else {
-        $error = "Invalid email or password";
+        echo "Invalid Credentials";
     }
 }
+
 ?>
